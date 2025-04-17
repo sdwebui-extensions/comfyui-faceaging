@@ -280,7 +280,7 @@ class NoiseInjection(nn.Module):
         self.weight = nn.Parameter(torch.zeros(1))
 
     def forward(self, image, noise=None):
-        if noise is None:
+        if noise is None or noise.size() != image.size():
             batch, _, height, width = image.shape
             noise = image.new_empty(batch, 1, height, width).normal_()
 

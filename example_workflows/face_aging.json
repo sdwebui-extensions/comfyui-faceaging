@@ -1,0 +1,201 @@
+{
+  "id": "390eb42a-2a0a-4a43-a23e-f5a73bf7d244",
+  "revision": 0,
+  "last_node_id": 8,
+  "last_link_id": 10,
+  "nodes": [
+    {
+      "id": 7,
+      "type": "PreviewImage",
+      "pos": [
+        379,
+        811
+      ],
+      "size": [
+        312.5184631347656,
+        326.5736999511719
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "图像",
+          "name": "images",
+          "type": "IMAGE",
+          "link": 9
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "Node name for S&R": "PreviewImage"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 1,
+      "type": "AgeTransformationNode",
+      "pos": [
+        -62,
+        813
+      ],
+      "size": [
+        315,
+        78
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "input_image",
+          "name": "input_image",
+          "type": "IMAGE",
+          "link": 7
+        },
+        {
+          "label": "net_model",
+          "name": "net_model",
+          "type": "AGENET",
+          "link": 10
+        }
+      ],
+      "outputs": [
+        {
+          "label": "IMAGE",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            9
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AgeTransformationNode"
+      },
+      "widgets_values": [
+        8
+      ]
+    },
+    {
+      "id": 8,
+      "type": "AgeLoadNet",
+      "pos": [
+        -318.2229919433594,
+        930.0806274414062
+      ],
+      "size": [
+        210,
+        26
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "AGENET",
+          "name": "AGENET",
+          "type": "AGENET",
+          "links": [
+            10
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AgeLoadNet"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        -706.6431884765625,
+        798.9951171875
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "图像",
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            7
+          ]
+        },
+        {
+          "label": "遮罩",
+          "name": "MASK",
+          "type": "MASK",
+          "slot_index": 1,
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "5a4279d8fc614d55ad995173c6313fa8.jpg",
+        "image",
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      7,
+      2,
+      0,
+      1,
+      0,
+      "IMAGE"
+    ],
+    [
+      9,
+      1,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ],
+    [
+      10,
+      8,
+      0,
+      1,
+      1,
+      "AGENET"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.2839025177495011,
+      "offset": [
+        918.1213979147052,
+        -751.6418866999485
+      ]
+    },
+    "ue_links": [],
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

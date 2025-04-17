@@ -62,6 +62,7 @@ class pSp(nn.Module):
 		if input_code:
 			codes = x
 		else:
+			print("self.encoder(x)")
 			codes = self.encoder(x)
 			# normalize with respect to the center of an average face
 			if self.opts.start_from_latent_avg:
@@ -69,6 +70,7 @@ class pSp(nn.Module):
 			# normalize with respect to the latent of the encoded image of pretrained pSp encoder
 			elif self.opts.start_from_encoded_w_plus:
 				with torch.no_grad():
+					print("self.pretrained_encoder")
 					encoded_latents = self.pretrained_encoder(x[:, :-1, :, :])
 					encoded_latents = encoded_latents + self.latent_avg
 				codes = codes + encoded_latents
@@ -84,12 +86,14 @@ class pSp(nn.Module):
 					codes[:, i] = 0
 
 		input_is_latent = (not input_code) or (input_is_full)
+		print("self.decoder")
 		images, result_latent = self.decoder([codes],
 											 input_is_latent=input_is_latent,
 											 randomize_noise=randomize_noise,
 											 return_latents=return_latents)
 
 		if resize:
+			print("self.face_pool")
 			images = self.face_pool(images)
 
 		if return_latents:

@@ -136,7 +136,7 @@ class AgeTransformationNode:
         # Apply age transformation
         age_transformer = AgeTransformer(target_age=target_age)
         with torch.no_grad():
-            input_image_age = age_transformer(input_tensor.cpu()).unsqueeze(0).to('cuda') # add batch dim
+            input_image_age = age_transformer(input_tensor).unsqueeze(0).cuda() # add batch dim
             result_tensor = net(input_image_age.float(), randomize_noise=False, resize=False)[0]
             result_image = tensor2im(result_tensor)
             # result_image.save('/workspace/qscar/faceAging/test.png')
