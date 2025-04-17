@@ -6,13 +6,7 @@ import logging
 import torch
 import torchvision.transforms as transforms
 import numpy as np
-import dlib
 from argparse import Namespace
-
-from .datasets.augmentations import AgeTransformer 
-from .utils.common import tensor2im  
-from .scripts.align_all_parallel import align_face
-from .models.psp import pSp
 
 # Suppress specific warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -31,11 +25,13 @@ logging.getLogger('torch').setLevel(logging.WARNING)
 CURRENT_DIR = 'models/face_aging/'
 PREDICTOR_PATH = os.path.join(CURRENT_DIR, "shape_predictor_68_face_landmarks.dat")
 MODEL_PATH = os.path.join(CURRENT_DIR, "sam_ffhq_aging.pt")
+if os.path.exists("/stable-diffusion-cache/models/face_aging"):
+    PREDICTOR_PATH = os.path.join("/stable-diffusion-cache/models/face_aging", "shape_predictor_68_face_landmarks.dat")
+    MODEL_PATH = os.path.join("/stable-diffusion-cache/models/face_aging", "sam_ffhq_aging.pt")
 
 # Check and load shape predictor
 if not os.path.exists(PREDICTOR_PATH):
     raise FileNotFoundError(f"Shape predictor not found at {PREDICTOR_PATH}")
-predictor = dlib.shape_predictor(PREDICTOR_PATH)
 
 # Define model paths dictionary
 model_paths = {
@@ -46,25 +42,47 @@ model_paths = {
 if not os.path.exists(MODEL_PATH):
     raise FileNotFoundError(f"Model file not found at {MODEL_PATH}")
 
-# Load checkpoint
-ckpt = torch.load(MODEL_PATH, map_location='cpu')  # weights_only 인자 제거
-opts = ckpt.get('opts', {})
-opts['checkpoint_path'] = MODEL_PATH
-opts = Namespace(**opts)
-
-# Initialize and load the pSp model
-net = pSp(opts)
-net.eval()
-if torch.cuda.is_available():
-    net.cuda()
-logging.info('Model successfully loaded!')
 
 # Define image transformations
-transform = transforms.Compose([
-    transforms.Resize((256, 256)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-])
+
+class LoadNet:
+    @staticmethod
+    def INPUT_TYPES():
+        return {
+            "required": {
+            }
+        }
+
+    RETURN_TYPES = ("AGENET",)
+    FUNCTION = "transform_age"
+    CATEGORY = "Custom/FaceAging"
+
+    def transform_age(self, ):
+        # Initialize and load the pSp model
+        # Load checkpoint
+        from .models.psp import pSp
+        import dlib
+        ckpt = torch.load(MODEL_PATH, map_location='cpu')  # weights_only 인자 제거
+        opts = ckpt.get('opts', {})
+        opts['checkpoint_path'] = MODEL_PATH
+        opts = Namespace(**opts)
+        net = pSp(opts)
+        net.eval()
+        if torch.cuda.is_available():
+            net.cuda()
+        logging.info('Model successfully loaded!')
+        predictor = dlib.shape_predictor(PREDICTOR_PATH)
+        transform = transforms.Compose([
+            transforms.Resize((256, 256)),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
+        ])
+        net_model = {
+            "net": net,
+            "predictor": predictor,
+            "transform": transform,
+        }
+        return (net_model, )
 
 class AgeTransformationNode:
     """
@@ -75,7 +93,8 @@ class AgeTransformationNode:
         return {
             "required": {
                 "input_image": ("IMAGE",),
-                "target_age": ("INT", {"default": 5, "min": -100, "max": 100})
+                "target_age": ("INT", {"default": 5, "min": -100, "max": 100}),
+                "net_model": ("AGENET", )
             }
         }
 
@@ -83,7 +102,7 @@ class AgeTransformationNode:
     FUNCTION = "transform_age"
     CATEGORY = "Custom/FaceAging"
 
-    def transform_age(self, input_image, target_age):
+    def transform_age(self, input_image, target_age, net_model):
         """
         Transforms the input image to the specified target age.
         
@@ -94,6 +113,12 @@ class AgeTransformationNode:
         Returns:
             PIL.Image: The aged image.
         """
+        from .datasets.augmentations import AgeTransformer
+        from .utils.common import tensor2im
+        from .scripts.align_all_parallel import align_face
+        net = net_model["net"]
+        predictor = net_model["predictor"]
+        transform = net_model["transform"]
 
         input_image = input_image.squeeze(0)
         input_image = input_image.permute(2, 0, 1)
@@ -128,7 +153,8 @@ class AgeTransformationNode:
         return {
             "inputs": {
                 "input_image": "Input Image",
-                "target_age": "Target Age"
+                "target_age": "Target Age",
+                "net_model": "AGENET",
             },
             "outputs": {
                 "Aged Image": "IMAGE"
@@ -136,5 +162,6 @@ class AgeTransformationNode:
         }
 
 NODE_CLASS_MAPPINGS = {
-    "AgeTransformationNode": AgeTransformationNode
+    "AgeTransformationNode": AgeTransformationNode,
+    "AgeLoadNet": LoadNet,
 }
